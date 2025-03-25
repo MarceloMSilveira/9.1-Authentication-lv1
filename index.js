@@ -63,24 +63,30 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  const {username:email,password} = req.body;
+  const {username:email,password:typedPassword} = req.body;
   try {
     //check if email exists:
     const result = await db.query("SELECT password FROM users WHERE email=$1;",[email]);
     if (result.rows.length===0) {
-      return res.send("Your email is not register yet. Try to retister first.")
+      return res.send("Your email is not register yet. Try to register first.")
     }
-    const passwordInDB = result.rows[0].password;
-    if (password===passwordInDB){
-      return res.status(200).render("secrets.ejs");
-    } else {
-      return res.status(401).send("incorret password.");
-    }
+    const hash = result.rows[0].password;
+    bcrypt.compare(typedPassword,hash, async (err,isMatch) => {
+      if (err) {
+        return res.status(501).send(`Login error:  ${err.message}`);
+      } else {
+        if (isMatch) {
+          return res.status(200).render("secrets.ejs");  
+        } else {
+          return res.status(401).send("Incorret password!");
+        }
+        
+      }
+    });
   } catch (error) {
     console.log(error)
-    res.status(500).send(error.details)
+    return res.status(500).send(error.details)
   }
-  res.render("home.ejs");
 });
 
 app.listen(port, () => {
