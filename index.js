@@ -3,6 +3,8 @@ import bodyParser from "body-parser";
 import morgan from "morgan";
 import 'dotenv/config';
 import pg from "pg";
+import bcrypt from "bcrypt";
+const saltRounds = 12;
 
 const app = express();
 const port = 3000;
@@ -38,13 +40,22 @@ app.post("/register", async (req, res) => {
   const {username:email,password} = req.body;
   try {
     const checkEmail = await db.query("SELECT * FROM users WHERE email=$1",[email]);
+    
     if (checkEmail.rows.length>0) {
       return res.send("Email already exists. Try logging in.");
-    }    
-    const query = "INSERT INTO users (email,password) VALUES ($1,$2) RETURNING id";
-    const result = await db.query(query,[email,password]);
-    console.log(result.rows[0].id);
-    res.render("secrets.ejs");  
+    } 
+    bcrypt.hash(password, saltRounds, async function(err, hash) {
+      if (err) {
+        console.log('Error in hashing password: ',err);
+        res.status(500).send(err);
+      } else {
+        // Store hash in your password DB.
+        const query = "INSERT INTO users (email,password) VALUES ($1,$2) RETURNING id";
+        const result = await db.query(query,[email,hash]);
+        console.log(result.rows[0].id);
+        res.render("secrets.ejs");
+      }
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send(error);
