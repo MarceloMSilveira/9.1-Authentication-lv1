@@ -4,6 +4,9 @@ import morgan from "morgan";
 import 'dotenv/config';
 import pg from "pg";
 import bcrypt from "bcrypt";
+import session from "express-session";
+import passport from "passport";
+import { Strategy } from "passport-local";
 const saltRounds = 12;
 
 const app = express();
