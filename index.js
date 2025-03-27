@@ -40,6 +40,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/secrets",(req,res)=>{
+  //console.log(req.user)
   if(req.isAuthenticated()){
     res.render("secrets.ejs")
   } else {
@@ -82,31 +83,36 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  const {username:email,password:typedPassword} = req.body;
+  
+});
+
+passport.use(new Strategy(async function verify (username, password, cb){
+  console.log(username);
+  console.log(password);
+
   try {
     //check if email exists:
-    const result = await db.query("SELECT password FROM users WHERE email=$1;",[email]);
+    const result = await db.query("SELECT password FROM users WHERE email=$1;",[username]);
     if (result.rows.length===0) {
-      return res.send("Your email is not register yet. Try to register first.")
+      return cb("Your email is not register yet. Try to register first.")
     }
+    const user = result.rows[0];
     const hash = result.rows[0].password;
-    bcrypt.compare(typedPassword,hash, async (err,isMatch) => {
+    bcrypt.compare(password,hash, async (err,isMatch) => {
       if (err) {
-        return res.status(501).send(`Login error:  ${err.message}`);
+        return cb(err);
       } else {
         if (isMatch) {
-          return res.status(200).render("secrets.ejs");  
+          return cb(null,user);  
         } else {
-          return res.status(401).send("Incorret password!");
+          return cb(null,false)
         }
-        
       }
     });
   } catch (error) {
-    console.log(error)
-    return res.status(500).send(error.details)
+    cb(error)
   }
-});
+}))
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
