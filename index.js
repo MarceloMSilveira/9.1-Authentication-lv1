@@ -39,6 +39,14 @@ app.get("/", (req, res) => {
   res.render("home.ejs");
 });
 
+app.get("/secrets",(req,res)=>{
+  if(req.isAuthenticated()){
+    res.render("secrets.ejs")
+  } else {
+    res.render("login.ejs")
+  }
+})
+
 app.get("/login", (req, res) => {
   res.render("login.ejs");
 });
