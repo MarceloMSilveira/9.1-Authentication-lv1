@@ -40,7 +40,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/secrets",(req,res)=>{
-  //console.log(req.user)
+  console.log(req.user)
   if(req.isAuthenticated()){
     res.render("secrets.ejs")
   } else {
@@ -82,9 +82,10 @@ app.post("/register", async (req, res) => {
   }
 });
 
-app.post("/login", async (req, res) => {
-  
-});
+app.post("/login", passport.authenticate("local", {
+  successRedirect:"/secrets",
+  failureRedirect:"/login"
+}));
 
 passport.use(new Strategy(async function verify (username, password, cb){
   console.log(username);
