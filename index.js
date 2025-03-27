@@ -95,12 +95,12 @@ app.post("/login", passport.authenticate("local", {
 }));
 
 passport.use(new Strategy(async function verify (username, password, cb){
-  console.log(username);
-  console.log(password);
+  //console.log(username);
+  //console.log(password);
 
   try {
     //check if email exists:
-    const result = await db.query("SELECT password FROM users WHERE email=$1;",[username]);
+    const result = await db.query("SELECT * FROM users WHERE email=$1;",[username]);
     if (result.rows.length===0) {
       return cb("Your email is not register yet. Try to register first.")
     }
