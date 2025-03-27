@@ -16,6 +16,14 @@ const {Client} = pg;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.use(morgan('dev'));
+//set session and passport
+app.use(session({
+  secret: 'SUPERTOPSECRET',
+  resave:false,
+  saveUninitialized: true
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 const db = new Client ({
   user: 'postgres',
