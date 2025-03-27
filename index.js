@@ -114,6 +114,14 @@ passport.use(new Strategy(async function verify (username, password, cb){
   }
 }))
 
+passport.serializeUser(function (user,cb){
+  cb(null,user)
+});
+
+passport.deserializeUser(function (user,cb){
+  cb(null,user)
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
