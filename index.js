@@ -20,7 +20,10 @@ app.use(morgan('dev'));
 app.use(session({
   secret: 'SUPERTOPSECRET',
   resave:false,
-  saveUninitialized: true
+  saveUninitialized: true,
+  cookie: {
+    maxAge: 1000*60*15
+  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -70,10 +73,14 @@ app.post("/register", async (req, res) => {
         res.status(500).send(err);
       } else {
         // Store hash in your password DB.
-        const query = "INSERT INTO users (email,password) VALUES ($1,$2) RETURNING id";
+        const query = "INSERT INTO users (email,password) VALUES ($1,$2) RETURNING *";
         const result = await db.query(query,[email,hash]);
-        console.log(result.rows[0].id);
-        res.render("secrets.ejs");
+        console.log(result.rows[0]);
+        const user = result.rows[0];
+        req.login(user,(err)=>{
+          console.log(err);
+          res.redirect("/secrets");
+        })
       }
     });
   } catch (error) {
