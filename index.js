@@ -18,7 +18,7 @@ app.use(express.static("public"));
 app.use(morgan('dev'));
 //set session and passport
 app.use(session({
-  secret: 'SUPERTOPSECRET',
+  secret: process.env.SESSION_SECRET,
   resave:false,
   saveUninitialized: true,
   cookie: {
@@ -32,7 +32,7 @@ const db = new Client ({
   user: 'postgres',
   host: 'localhost',
   port: 5432,
-  password: process.env.db_pwd,
+  password: process.env.DB_PWD,
   database: 'secrets'
 });
 
