@@ -43,14 +43,20 @@ app.get("/", (req, res) => {
   res.render("home.ejs");
 });
 
-app.get("/secrets",(req,res)=>{
-  console.log(req.user)
-  if(req.isAuthenticated()){
-    res.render("secrets.ejs")
+app.get("/secrets", (req, res) => {
+  
+  if (req.isAuthenticated()) {
+    secret = req.user.secret  
+    res.render("secrets.ejs", {secret: secret});
+
+    //TODO: Update this to pull in the user secret to render in secrets.ejs
   } else {
-    res.render("login.ejs")
+    res.redirect("/login");
   }
-})
+});
+
+//TODO: Add a get route for the submit button
+//Think about how the logic should work with authentication.
 
 app.get("/login", (req, res) => {
   res.render("login.ejs");
@@ -110,6 +116,9 @@ app.post("/login", passport.authenticate("local", {
   successRedirect:"/secrets",
   failureRedirect:"/login"
 }));
+
+//TODO: Create the post route for submit.
+//Handle the submitted data and add it to the database
 
 passport.use("local",new Strategy(async function verify (username, password, cb){
   //console.log(username);
