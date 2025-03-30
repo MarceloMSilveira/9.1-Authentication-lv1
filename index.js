@@ -190,9 +190,11 @@ async (request, accessToken, refreshToken, profile, cb) => {
     if (result.rows.length === 0) {
       const query = "INSERT INTO users (email,password) VALUES ($1,$2) RETURNING *";
       const resultInsert = await db.query(query,[email,"google"]);
-      return cb(null,resultInsert.rows[0]);
+      const newUser = resultInsert.rows[0]; 
+      return cb(null,newUser);
     } else {
-      return cb(null,result.rows[0]);
+      const userInDB = result.rows[0]
+      return cb(null,userInDB);
     }
   } catch (error) {
     return cb(error)
