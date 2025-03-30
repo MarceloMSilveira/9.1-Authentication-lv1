@@ -44,11 +44,9 @@ app.get("/", (req, res) => {
 });
 
 app.get("/secrets", (req, res) => {
-  
   if (req.isAuthenticated()) {
-    secret = req.user.secret  
+    const secret = req.user.secret ? req.user.secret : "";  
     res.render("secrets.ejs", {secret: secret});
-
     //TODO: Update this to pull in the user secret to render in secrets.ejs
   } else {
     res.redirect("/login");
@@ -57,6 +55,13 @@ app.get("/secrets", (req, res) => {
 
 //TODO: Add a get route for the submit button
 //Think about how the logic should work with authentication.
+app.get("/submit", (req,res)=>{
+  if (req.isAuthenticated()) {
+    res.render("submit.ejs") 
+  } else {
+    res.redirect("/login")
+  }
+})
 
 app.get("/login", (req, res) => {
   res.render("login.ejs");
@@ -102,7 +107,7 @@ app.post("/register", async (req, res) => {
         const user = result.rows[0];
         req.login(user,(err)=>{
           console.log(err);
-          res.redirect("/secrets");
+          res.redirect("/submit");
         })
       }
     });
@@ -119,6 +124,29 @@ app.post("/login", passport.authenticate("local", {
 
 //TODO: Create the post route for submit.
 //Handle the submitted data and add it to the database
+app.post("/submit", async (req,res)=>{
+  const secret = req.body.secret;
+  const email = req.user.email;
+  try {
+    const query = "UPDATE users SET secret = $1 WHERE email = $2 RETURNING *";
+        const result = await db.query(query,[secret,email]);
+        const user = result.rows[0];
+        console.log(user);
+        if (result.rows.length === 0) {
+          console.log("User not found.");
+          return res.redirect("/login");
+        }
+        req.login(user,(err)=>{
+         if (err) {
+           console.log("Error in login:", err);
+         }
+         return res.redirect("/secrets");
+        })
+  } catch (error) {
+    console.log(error);
+    return res.render("home.ejs");
+  }
+})
 
 passport.use("local",new Strategy(async function verify (username, password, cb){
   //console.log(username);
