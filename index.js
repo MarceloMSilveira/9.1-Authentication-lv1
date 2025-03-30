@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import session from "express-session";
 import passport from "passport";
 import { Strategy } from "passport-local";
+import GoogleStrategy from "passport-google-oauth2"
 const saltRounds = 12;
 
 const app = express();
@@ -59,6 +60,22 @@ app.get("/register", (req, res) => {
   res.render("register.ejs");
 });
 
+app.get("/auth/google", passport.authenticate("google", {
+  scope: ["profile", "email"]
+}));
+
+app.get("/auth/google/secrets", passport.authenticate("google", {
+  successRedirect: "/secrets",
+  failureRedirect: "/login  "
+}));
+
+app.get("/logout", function(req, res, next) {
+  req.logout(function(err) {
+    if (err) { return next(err); }
+    res.redirect('/');
+  });
+});
+
 app.post("/register", async (req, res) => {
   const {username:email,password} = req.body;
   try {
@@ -94,7 +111,7 @@ app.post("/login", passport.authenticate("local", {
   failureRedirect:"/login"
 }));
 
-passport.use(new Strategy(async function verify (username, password, cb){
+passport.use("local",new Strategy(async function verify (username, password, cb){
   //console.log(username);
   //console.log(password);
 
@@ -121,6 +138,30 @@ passport.use(new Strategy(async function verify (username, password, cb){
     cb(error)
   }
 }))
+
+passport.use("google", new GoogleStrategy({
+  clientID:     process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: "http://localhost:3000/auth/google/secrets",
+  userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
+},
+async (request, accessToken, refreshToken, profile, cb) => {
+  console.log(profile.emails[0].value);
+  const email = profile.emails[0].value;
+  try {
+    const result = await db.query("SELECT * FROM users WHERE email=$1;",[email]);
+    if (result.rows.length === 0) {
+      const query = "INSERT INTO users (email,password) VALUES ($1,$2) RETURNING *";
+      const resultInsert = await db.query(query,[email,"google"]);
+      return cb(null,resultInsert.rows[0]);
+    } else {
+      return cb(null,result.rows[0]);
+    }
+  } catch (error) {
+    return cb(error)
+  }
+}
+))
 
 passport.serializeUser(function (user,cb){
   cb(null,user)
